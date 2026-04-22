@@ -2,6 +2,8 @@
 
 import React from 'react';
 import useCanvasStore from '../../store/useCanvasStore';
+import { Download } from 'lucide-react';
+import { generateProjectZip } from '../../utils/exportProject';
 
 export default function CanvasHeader({ canvasId }: { canvasId: string }) {
   const { nodes, setNodes } = useCanvasStore();
@@ -63,6 +65,12 @@ export default function CanvasHeader({ canvasId }: { canvasId: string }) {
           className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-md text-sm font-semibold transition flex items-center gap-2 active:scale-95"
         >
           <span>▶</span> Simulate Flow
+        </button>
+        <button 
+          onClick={() => generateProjectZip(nodes)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl shadow-md text-sm font-semibold transition flex items-center gap-2 active:scale-95"
+        >
+          <Download size={16} /> Export Project
         </button>
       </div>
     </header>
