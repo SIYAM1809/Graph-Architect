@@ -5,7 +5,7 @@ import { Handle, Position, NodeProps } from 'reactflow';
 import Editor from '@monaco-editor/react';
 import useCanvasStore from '../../store/useCanvasStore';
 
-export default function CustomNode({ id, data, isConnectable }: NodeProps) {
+export default function CustomNode({ id, data, isConnectable, selected }: NodeProps) {
   const [isEditing, setIsEditing] = useState(false);
   const updateNodeCode = useCanvasStore((state) => state.updateNodeCode);
 
@@ -20,14 +20,28 @@ export default function CustomNode({ id, data, isConnectable }: NodeProps) {
     }
   }, [id, updateNodeCode]);
 
+  const getLanguage = (label: string) => {
+    const l = (label || '').toLowerCase();
+    if (l === 'database') return 'sql';
+    if (l === 'api') return 'json';
+    if (l === 'client' || l === 'server') return 'typescript';
+    return 'javascript';
+  };
+
+  const editorLanguage = getLanguage(data.label);
+
   return (
     <div 
-      className="bg-gray-800 text-white rounded-xl shadow-lg border border-gray-600 min-w-[200px] overflow-hidden"
+      className={`text-white rounded-xl min-w-[200px] overflow-hidden backdrop-blur-md transition-all duration-300 ${
+        selected 
+          ? 'bg-white/10 border border-blue-400 shadow-[0_0_15px_rgba(96,165,250,0.5)]' 
+          : 'bg-white/5 border border-white/10 shadow-lg'
+      }`}
       onDoubleClick={onDoubleClick}
     >
       <Handle type="target" position={Position.Top} isConnectable={isConnectable} className="w-3 h-3 bg-blue-500" />
       
-      <div className="bg-gray-900 px-4 py-2 flex items-center justify-between border-b border-gray-700">
+      <div className="bg-black/30 px-4 py-2 flex items-center justify-between border-b border-white/10">
         <span className="font-semibold text-sm tracking-widest">{data.label || 'Node'}</span>
         {isEditing && (
           <button 
@@ -44,7 +58,8 @@ export default function CustomNode({ id, data, isConnectable }: NodeProps) {
           <div className="nodrag nowheel w-[400px] h-[300px] cursor-text" onDoubleClick={(e) => e.stopPropagation()}>
             <Editor
               height="100%"
-              defaultLanguage="javascript"
+              defaultLanguage={editorLanguage}
+              language={editorLanguage}
               theme="vs-dark"
               value={data.code || '// Write some code...'}
               onChange={handleEditorChange}

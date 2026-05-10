@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useCallback, useState, useRef } from 'react';
-import ReactFlow, { Background, Controls, EdgeChange, NodeChange, BackgroundVariant } from 'reactflow';
+import ReactFlow, { Background, Controls, EdgeChange, NodeChange, BackgroundVariant, MiniMap, MarkerType } from 'reactflow';
 import 'reactflow/dist/style.css';
 import useCanvasStore from '../../store/useCanvasStore';
 import io, { Socket } from 'socket.io-client';
@@ -9,6 +9,14 @@ import CustomNode from './CustomNode';
 
 const nodeTypes = {
   custom: CustomNode,
+};
+
+const defaultEdgeOptions = {
+  type: 'smoothstep',
+  markerEnd: {
+    type: MarkerType.ArrowClosed,
+    color: '#94a3b8',
+  },
 };
 
 interface DiagramCanvasProps {
@@ -156,12 +164,24 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
 
   // Apply animation flag to edges dynamically
   const displayedEdges = React.useMemo(() => {
-    if (!isPlaying) return edges;
-    return edges.map(edge => ({
-      ...edge,
-      animated: true,
-      style: { ...edge.style, stroke: '#3b82f6', strokeWidth: 2 }
-    }));
+    return edges.map(edge => {
+      const baseEdge = {
+        ...edge,
+        type: edge.type || 'smoothstep',
+        markerEnd: edge.markerEnd || {
+          type: MarkerType.ArrowClosed,
+          color: isPlaying ? '#3b82f6' : '#94a3b8',
+        }
+      };
+      
+      if (!isPlaying) return baseEdge;
+      
+      return {
+        ...baseEdge,
+        animated: true,
+        style: { ...edge.style, stroke: '#3b82f6', strokeWidth: 2 }
+      };
+    });
   }, [edges, isPlaying]);
 
   return (
@@ -177,10 +197,26 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
         onEdgesChange={onEdgesChangeWithSync}
         onConnect={onConnectWithSync}
         nodeTypes={nodeTypes}
+        defaultEdgeOptions={defaultEdgeOptions}
         fitView
       >
         <Background color="#ccc" gap={16} variant={BackgroundVariant.Dots} />
         <Controls />
+        <MiniMap 
+          nodeColor={(node) => {
+            switch (node.data?.label?.toLowerCase()) {
+              case 'database': return '#f59e0b';
+              case 'server': return '#3b82f6';
+              case 'api': return '#10b981';
+              default: return '#6b7280';
+            }
+          }}
+          nodeStrokeWidth={3}
+          zoomable
+          pannable
+          className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden"
+          maskColor="rgba(0,0,0,0.4)"
+        />
       </ReactFlow>
 
       {/* Render Remote Cursors */}
