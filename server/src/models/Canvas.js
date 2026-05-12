@@ -6,6 +6,10 @@ const canvasSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  revision: {
+    type: Number,
+    default: 0,
+  },
   nodes: {
     type: Array,
     default: [],

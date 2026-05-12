@@ -40,6 +40,7 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const revisionRef = useRef<number>(0);
 
   useEffect(() => {
     // Initialize Socket
@@ -54,6 +55,13 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
     newSocket.on('canvas-state', (state) => {
       setNodes(state.nodes || []);
       setEdges(state.edges || []);
+      revisionRef.current = typeof state.revision === 'number' ? state.revision : 0;
+    });
+
+    newSocket.on('canvas-resync', (state) => {
+      setNodes(state.nodes || []);
+      setEdges(state.edges || []);
+      revisionRef.current = typeof state.revision === 'number' ? state.revision : revisionRef.current;
     });
 
     newSocket.on('cursor-update', ({ userId, position }) => {
@@ -64,16 +72,21 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
       removeCursor(userId);
     });
 
-    newSocket.on('nodes-sync', (syncedNodes) => {
+    newSocket.on('nodes-sync', (payload) => {
+      const syncedNodes = payload?.nodes ?? payload;
       setNodes(syncedNodes);
+      if (typeof payload?.revision === 'number') revisionRef.current = payload.revision;
     });
 
-    newSocket.on('edges-sync', (syncedEdges) => {
+    newSocket.on('edges-sync', (payload) => {
+      const syncedEdges = payload?.edges ?? payload;
       setEdges(syncedEdges);
+      if (typeof payload?.revision === 'number') revisionRef.current = payload.revision;
     });
 
-    newSocket.on('code-sync', ({ nodeId, code }) => {
+    newSocket.on('code-sync', ({ nodeId, code, revision }) => {
       useCanvasStore.getState().updateNodeCode(nodeId, code);
+      if (typeof revision === 'number') revisionRef.current = revision;
     });
 
     const handlePlay = () => {
@@ -98,12 +111,12 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
       const latestNodes = useCanvasStore.getState().nodes;
       const newNodes = [...latestNodes, newNode];
       setNodes(newNodes);
-      newSocket.emit('nodes-change', newNodes);
+      newSocket.emit('nodes-change', { nodes: newNodes, baseRevision: revisionRef.current });
     };
 
     const handleCodeChangeSync = (e: Event) => {
       const { nodeId, code } = (e as CustomEvent).detail;
-      newSocket.emit('code-change', { nodeId, code });
+      newSocket.emit('code-change', { nodeId, code, baseRevision: revisionRef.current });
     };
 
     window.addEventListener('play-simulation', handlePlaySync);
@@ -137,7 +150,7 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
       // Zustand get() is updated synchronously
       setTimeout(() => {
         const latestNodes = useCanvasStore.getState().nodes;
-        socket.emit('nodes-change', latestNodes);
+        socket.emit('nodes-change', { nodes: latestNodes, baseRevision: revisionRef.current });
       }, 0);
     }
   }, [onNodesChange, socket]);
@@ -147,7 +160,7 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
     if (socket) {
       setTimeout(() => {
         const latestEdges = useCanvasStore.getState().edges;
-        socket.emit('edges-change', latestEdges);
+        socket.emit('edges-change', { edges: latestEdges, baseRevision: revisionRef.current });
       }, 0);
     }
   }, [onEdgesChange, socket]);
@@ -157,7 +170,7 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
     if (socket) {
       setTimeout(() => {
         const latestEdges = useCanvasStore.getState().edges;
-        socket.emit('edges-change', latestEdges);
+        socket.emit('edges-change', { edges: latestEdges, baseRevision: revisionRef.current });
       }, 0);
     }
   }, [onConnect, socket]);
@@ -200,7 +213,7 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
       >
-        <Background color="#ccc" gap={16} variant={BackgroundVariant.Dots} />
+        <Background color="#334155" gap={20} size={1.5} variant={BackgroundVariant.Dots} />
         <Controls />
         <MiniMap 
           nodeColor={(node) => {
@@ -214,8 +227,8 @@ export default function DiagramCanvas({ canvasId }: DiagramCanvasProps) {
           nodeStrokeWidth={3}
           zoomable
           pannable
-          className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden"
-          maskColor="rgba(0,0,0,0.4)"
+          className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl"
+          maskColor="rgba(2, 6, 23, 0.7)"
         />
       </ReactFlow>
 

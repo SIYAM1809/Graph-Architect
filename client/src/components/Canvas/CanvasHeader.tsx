@@ -2,7 +2,7 @@
 
 import React from 'react';
 import useCanvasStore from '../../store/useCanvasStore';
-import { Download } from 'lucide-react';
+import { Download, Play, Plus } from 'lucide-react';
 import { generateProjectZip } from '../../utils/exportProject';
 
 export default function CanvasHeader({ canvasId }: { canvasId: string }) {
@@ -26,51 +26,50 @@ export default function CanvasHeader({ canvasId }: { canvasId: string }) {
   };
 
   return (
-    <header className="bg-white/90 backdrop-blur-md border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10 w-full shadow-sm">
-      <div>
-        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-          Dev-Sync
-        </h1>
-        <p className="text-xs text-gray-500 font-mono mt-1">Workspace ID: {canvasId}</p>
-      </div>
-      <div className="flex gap-3">
-        <div className="flex border border-gray-300 rounded-xl overflow-hidden shadow-sm">
-          <button 
-            onClick={() => addNode('Client')}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 text-sm font-medium transition active:scale-95 border-r border-gray-300"
-          >
-            + Client
-          </button>
-          <button 
-            onClick={() => addNode('Server')}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 text-sm font-medium transition active:scale-95 border-r border-gray-300"
-          >
-            + Server
-          </button>
-          <button 
-            onClick={() => addNode('Database')}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 text-sm font-medium transition active:scale-95 border-r border-gray-300"
-          >
-            + Database
-          </button>
-          <button 
-            onClick={() => addNode('API')}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 text-sm font-medium transition active:scale-95"
-          >
-            + API
-          </button>
+    <header className="glass-panel px-6 py-4 flex flex-col md:flex-row justify-between items-center z-10 w-full sticky top-0 gap-4">
+      <div className="flex items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-gradient">
+            Dev-Sync
+          </h1>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <p className="text-xs text-slate-400 font-mono">Workspace: {canvasId}</p>
+          </div>
         </div>
+      </div>
+      
+      <div className="flex flex-wrap justify-center gap-4 items-center">
+        <div className="flex bg-slate-900/50 border border-slate-700/50 rounded-xl overflow-hidden shadow-inner p-1">
+          {['Client', 'Server', 'Database', 'API'].map((type) => (
+            <button 
+              key={type}
+              onClick={() => addNode(type)}
+              className="flex items-center gap-1 hover:bg-slate-800 text-slate-300 hover:text-white px-4 py-2 text-sm font-medium transition-all rounded-lg active:scale-95"
+            >
+              <Plus size={14} /> {type}
+            </button>
+          ))}
+        </div>
+        
+        <div className="hidden md:block h-8 w-px bg-slate-700/50 mx-2" />
+
         <button 
           onClick={playSimulation}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-md text-sm font-semibold transition flex items-center gap-2 active:scale-95"
+          className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-blue-900/20 text-sm font-semibold transition-all flex items-center gap-2 active:scale-95 overflow-hidden"
         >
-          <span>▶</span> Simulate Flow
+          <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 -translate-x-full skew-x-12" />
+          <Play size={16} className="fill-current" /> Simulate Flow
         </button>
+        
         <button 
           onClick={() => generateProjectZip(nodes)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl shadow-md text-sm font-semibold transition flex items-center gap-2 active:scale-95"
+          className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-6 py-2.5 rounded-xl shadow-lg text-sm font-semibold transition-all flex items-center gap-2 active:scale-95"
         >
-          <Download size={16} /> Export Project
+          <Download size={16} /> Export
         </button>
       </div>
     </header>
